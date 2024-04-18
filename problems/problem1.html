@@ -70,6 +70,55 @@
     }
 
 
+    let engine = ThreeEngine.new_default_3d();
+    
+    let settings = {
+        o1_t_x : 0,
+        o1_t_y : 0,
+        o1_t_z : 0,
+        o1_a1 : 0,
+        o1_a2 : 0,
+        o1_a3 : 0,
+
+        o2_t_x : 0,
+        o2_t_y : 0,
+        o2_t_z : 0,
+        o2_a1 : 0,
+        o2_a2 : 0,
+        o2_a3 : 0,
+
+        dist : 0
+    };
+    
+    let gui = get_default_lil_gui();
+
+    let folder1 = gui.addFolder("Object 1");
+    folder1.add(settings, "o1_t_x", -2.5, 2.5).name("Transform X");
+    folder1.add(settings, "o1_t_y", -2.5, 2.5).name("Transform Y");
+    folder1.add(settings, "o1_t_z", -2.5, 2.5).name("Transform Z");
+    folder1.add(settings, "o1_a1", -Math.PI, Math.PI).name("Roll");
+    folder1.add(settings, "o1_a2", -Math.PI, Math.PI).name("Pitch"); 
+    folder1.add(settings, "o1_a3", -Math.PI, Math.PI).name("Yaw");
+
+    let folder2 = gui.addFolder("Object 2");
+    folder2.add(settings, "o2_t_x", -2.5, 2.5).name("Transform X");
+    folder2.add(settings, "o2_t_y", -2.5, 2.5).name("Transform Y");
+    folder2.add(settings, "o2_t_z", -2.5, 2.5).name("Transform Z");
+    folder2.add(settings, "o2_a1", -Math.PI, Math.PI).name("Roll");
+    folder2.add(settings, "o2_a2", -Math.PI, Math.PI).name("Pitch"); 
+    folder2.add(settings, "o2_a3", -Math.PI, Math.PI).name("Yaw");
+
+    gui.add(settings, "dist", -2, 2).name("Disp-based Dist").disable();
+
+
+    engine.animation_loop(() => {
+        let a1 = settings.a1;
+        let a2 = settings.a2;
+        let a3 = settings.a3;
+        let a3 = settings.t_x;
+    });
+
+
 
 </script>
 </body>

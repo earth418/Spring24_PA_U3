@@ -26,6 +26,39 @@
     // todo: open-ended.  Be as creative as you want, or feel free to recreate any of the visualizations
     // todo: found in Section 3.3.
 
+    // make a sphere and put a flattened monkey at the end of a vector, use it as rotation
+
+    let engine = ThreeEngine.new_default_3d();
+    
+    let settings = {
+        axis_x : 0,
+        axis_y : 0,
+        axis_z : 0,
+        angle : 0
+    };
+    
+    let gui = get_default_lil_gui();
+
+    gui.add(settings, "axis_x", -1, 1).name("Rot. Axis X");
+    gui.add(settings, "axis_y", -1, 1).name("Rot. Axis Y");
+    gui.add(settings, "axis_z", -1, 1).name("Rot. Axis Z");
+    gui.add(settings, "angle", -Math.PI, Math.PI).name("Rot. Angle");
+
+    engine.draw_debug_sphere([0.0, 0.0, 0.0], 0.9, 0x33);
+
+    engine.animation_loop(() => {
+        // let quat = [settings.axis_x, settings.axis_y, settings.axis_z, settings.theta];
+       
+        let default_quat = [0.0, 0.0, 0.0, 1.0];
+
+        let s = Math.sin(settings.angle);
+        let rotation = [s * settings.axis_x, s * settings.axis_y, s * settings.axis_z, Math.cos(settings.angle)];
+        
+        // let product = 
+
+        engine.draw_debug_cone([0.0, 0.0, 0.0], [rotation[0], rotation[1], rotation[2]], 0.25, 0x884422);
+    });
+
 </script>
 </body>
 </html>

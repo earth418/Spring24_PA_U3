@@ -20,7 +20,8 @@
 </head>
 <body>
 <script type="module">
-    import {ThreeEngine} from "../js/utils/utils_three.js";
+    import {ThreeEngine, get_default_lil_gui, refresh_displays} from "../js/utils/utils_three.js";
+    import {add_matrix_matrix, mul_matrix_matrix, sub_matrix_matrix, identity_matrix, mul_matrix_scalar, transpose} from "../js/utils/utils_math.js";
 
     // todo: create a visualization that demonstrates your knowledge of displacement-based
     // todo: distance over SE(3).  Note that this will use your logarithm solution from PS_U3,
@@ -110,12 +111,146 @@
 
     gui.add(settings, "dist", -2, 2).name("Disp-based Dist").disable();
 
+    function SE3_matrix(a1, a2, a3, tx, ty, tz) {
+        let s1 = Math.sin(a1);
+        let s2 = Math.sin(a2);
+        let s3 = Math.sin(a3);
+        let c1 = Math.cos(a1);
+        let c2 = Math.cos(a2);
+        let c3 = Math.cos(a3);
+
+        return [[                c2 * c3,               -c2 * s3,       s2,  tx],
+                [ c3 * s1 * s2 + c1 * s3, c1 * c3 - s1 * s2 * s3, -c2 * s1,  ty],
+                [-c1 * c3 * s2 + s1 * s3, c3 * s1 + c1 * s2 * s3,  c1 * c2,  tz],
+                [                    0.0,                    0.0,      0.0, 1.0]];
+    }
+
+    function matrix_trace(matrix) {
+        let s = 0;
+        for (let i = 0; i < matrix.length; ++i) {
+            s += matrix[i][i];
+        }
+        return s;
+    }
+
+    function get_SE3_rot_part(SE3_inp) {
+        return [[SE3_inp[0][0], SE3_inp[0][1], SE3_inp[0][2]],
+                [SE3_inp[1][0], SE3_inp[1][1], SE3_inp[1][2]],
+                [SE3_inp[2][0], SE3_inp[2][1], SE3_inp[2][2]]];
+    }
+
+    function get_SE3_trans_part(SE3_inp) {
+        return [[SE3_inp[0][3]], [SE3_inp[1][3]], [SE3_inp[2][3]]];
+    }
+
+    let epsilon = 0.0001;
+
+    function SE3_log(mat_inp) {
+        let R = get_SE3_rot_part(mat_inp);
+        let Rt = transpose(R);
+        let beta = Math.acos((matrix_trace(R) - 1.0) / 2.0);
+        let A = identity_matrix(3);
+        if (beta < epsilon) {
+            let p = 0.5 + beta*beta / 12.0 + 7 * Math.pow(beta, 4) / 720.0;
+            A = mul_matrix_scalar(p, sub_matrix_matrix(R, Rt));
+        } else if (Math.abs(beta - Math.PI) < epsilon) {
+            function bpi_helper(i,j) {
+                return Math.PI * Math.sqrt(0.5 + 0.5 * R[i][j]);
+            };
+            A = [[0.0, -bpi_helper(2,2), bpi_helper(1,1)],
+                 [bpi_helper(2,2), 0.0, -bpi_helper(0,0)],
+                 [-bpi_helper(2,2), bpi_helper(0,0), 0.0]];
+        } else {
+            let p = beta / (2 * Math.sin(beta));
+            A = mul_matrix_scalar(p, sub_matrix_matrix(R, Rt));
+        }
+
+        let a1 = A[2][1];
+        let a2 = A[0][2];
+        let a3 = A[1][0];
+
+        let u = 0.0;
+        let v = 0.0;
+        let t = get_SE3_trans_part(mat_inp);
+
+        if (beta < epsilon) {
+            u = 0.5 - beta*beta / (24.0) + Math.pow(beta, 4) / (720.0);
+            v = 1.0/6.0 - beta*beta / 120.0 + Math.pow(beta, 4) / (720.0*7);
+        } else {
+            u = (1 - Math.cos(beta)) / (beta * beta);
+            v = (beta - Math.sin(beta)) / Math.pow(beta,3);
+        }
+
+        let B = mul_matrix_matrix(A,A);
+        let Bprod = mul_matrix_scalar(B, v);
+        let Aprod = mul_matrix_scalar(A, u);
+
+        let prod = add_matrix_matrix(identity_matrix(3), add_matrix_matrix(Bprod, Aprod));
+
+        let b = mul_matrix_matrix(matrix_inverse_3x3(prod), t);
+
+        let log = A.map((x) => x.map((x) => x));
+        log[0].push(b[0][0]);
+        log[1].push(b[1][0]);
+        log[2].push(b[2][0]);
+        log.push([0.0, 0.0, 0.0, 0.0]);
+
+        return log;
+    }
 
     engine.animation_loop(() => {
-        let a1 = settings.a1;
-        let a2 = settings.a2;
-        let a3 = settings.a3;
-        let a3 = settings.t_x;
+        let o1_a1 = settings.o1_a1;
+        let o1_a2 = settings.o1_a2;
+        let o1_a3 = settings.o1_a3;
+        let o1_t_x = settings.o1_t_x;
+        let o1_t_y = settings.o1_t_y;
+        let o1_t_z = settings.o1_t_z;
+
+        let o2_a1 = settings.o2_a1;
+        let o2_a2 = settings.o2_a2;
+        let o2_a3 = settings.o2_a3;
+        let o2_t_x = settings.o2_t_x;
+        let o2_t_y = settings.o2_t_y;
+        let o2_t_z = settings.o2_t_z;
+
+        let o1_SE3 = SE3_matrix(o1_a1, o1_a2, o1_a3, o1_t_x, o1_t_y, o1_t_z);
+        let o2_SE3 = SE3_matrix(o2_a1, o2_a2, o2_a3, o2_t_x, o2_t_y, o2_t_z);
+
+        let o1_rot_T = transpose(get_SE3_rot_part(o1_SE3));
+        // console.log(o1_SE3);
+        let neg_T = [[-o1_SE3[0][3]], [-o1_SE3[1][3]], [-o1_SE3[2][3]]];
+        // console.log(neg_T)
+        let o1_t_rotd = mul_matrix_matrix(o1_rot_T, neg_T);
+
+        // console.log(o1_t_rotd);
+
+        let o1_inv = o1_rot_T.map((x) => x.map((x) => x));
+        o1_inv[0].push(o1_t_rotd[0][0]);
+        o1_inv[1].push(o1_t_rotd[1][0]);
+        o1_inv[2].push(o1_t_rotd[2][0]);
+        o1_inv.push([0.0, 0.0, 0.0, 1.0]);
+
+        // console.log(o1_inv);
+
+        let disp = mul_matrix_matrix(o1_inv, o2_SE3);
+        
+        let se3_disp = SE3_log(disp);
+
+        let a1 = se3_disp[2][1];
+        let a2 = se3_disp[0][2];
+        let a3 = se3_disp[1][0];
+        let a4 = se3_disp[0][3];
+        let a5 = se3_disp[1][3];
+        let a6 = se3_disp[2][3];
+
+        let dist = Math.sqrt(a1*a1 + a2*a2 +
+                a3*a3 + a4*a4 + a5*a5 + a6*a6);
+
+        settings.dist = dist;
+
+        refresh_displays(gui);
+
+        alert(1);
     });
 
 

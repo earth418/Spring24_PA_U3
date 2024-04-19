@@ -54,7 +54,18 @@
         let s = Math.sin(settings.angle);
         let rotation = [s * settings.axis_x, s * settings.axis_y, s * settings.axis_z, Math.cos(settings.angle)];
         
-        // let product = 
+        let len = Math.pow(settings.axis_x, 2) + Math.pow(settings.axis_y, 2) + Math.pow(settings.axis_z, 2);
+        if (len != 1 && len != 0) {
+            let sqlen = Math.sqrt(len)
+            settings.axis_x /= sqlen;
+            settings.axis_y /= sqlen;
+            settings.axis_z /= sqlen;
+        }
+
+        refresh_displays(gui);
+
+        // let product = default_quat * rotation;
+    
 
         engine.draw_debug_cone([0.0, 0.0, 0.0], [rotation[0], rotation[1], rotation[2]], 0.25, 0x884422);
     });

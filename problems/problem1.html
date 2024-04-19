@@ -115,7 +115,7 @@
         let s1 = Math.sin(a1);
         let s2 = Math.sin(a2);
         let s3 = Math.sin(a3);
-        
+
         let c1 = Math.cos(a1);
         let c2 = Math.cos(a2);
         let c3 = Math.cos(a3);
@@ -160,7 +160,7 @@
             };
             A = [[0.0, -bpi_helper(2,2), bpi_helper(1,1)],
                  [bpi_helper(2,2), 0.0, -bpi_helper(0,0)],
-                 [-bpi_helper(2,2), bpi_helper(0,0), 0.0]];
+                 [-bpi_helper(1,1), bpi_helper(0,0), 0.0]];
         } else {
             let p = beta / (2 * Math.sin(beta));
             A = mul_matrix_scalar(sub_matrix_matrix(R, Rt), p);
@@ -200,6 +200,8 @@
         return log;
     }
 
+    // let i = engine.add_suzanne_monkey_as_mesh_object();
+
     engine.animation_loop(() => {
         let o1_a1 = settings.o1_a1;
         let o1_a2 = settings.o1_a2;
@@ -227,8 +229,13 @@
         let object_1_end = mul_matrix_matrix(o1_SE3, [[end[0]], [end[1]], [end[2]], [1.0]]);
         let object_2_end = mul_matrix_matrix(o2_SE3, [[end[0]], [end[1]], [end[2]], [1.0]]);
         
-        console.log(object_1_start);
-        
+        // let v = engine.get_local_vertex_positions_of_mesh_object(i);
+        // let updated_v = v.map((point) => {
+        //     let o = mul_matrix_matrix(o1_SE3, [[point[0]], [point[1]], [point[2]], [1.0]]);
+        //     return [o[0][0], o[1][0], o[2][0]];
+        // });
+        // engine.update_vertex_positions_of_mesh_object_wireframe(i, updated_v);
+
         engine.draw_debug_cone(
             [object_1_start[0][0], object_1_start[1][0], object_1_start[2][0]],
             [object_1_end[0][0], object_1_end[1][0], object_1_end[2][0]],
